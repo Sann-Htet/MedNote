@@ -1,0 +1,20 @@
+{
+  "packages": [
+    "python@3.12",
+    "pdm@latest",
+    "caddy@latest",
+    "nodejs@20.11.0"
+  ],
+  "shell": {
+    "init_hook": [
+      "pdm install",
+      "npm run build",
+      "npm run preview"
+      
+    ],
+    "scripts": {
+      "start": "pdm run dev",
+      "test":  "pdm run test"
+    }
+  }
+}

@@ -1,0 +1,145 @@
+version: "3.9"
+x-development-volumes: &development-volumes
+  volumes:
+    - ./backend:/workspace/app/backend/
+    - ./models:/workspace/app/models/
+    - ./Makefile:/workspace/app/Makefile
+    - ./pyproject.toml:/workspace/app/pyproject.toml
+    - ./pdm.lock:/workspace/app/pdm.lock
+    - ./huggingface:/root/.cache/huggingface
+    - ./torch:/root/.cache/torch
+    # - $HOME/.aws/credentials:/home/nonroot/.aws/credentials:ro
+
+services:
+  mednote:
+    tty: true
+    environment:
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - APP_HF_TOKEN=${APP_HF_TOKEN}
+      - APP_DEVICE=${APP_DEVICE}
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile
+      args:
+        AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+        AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+        AWS_SUBMISSION_KEY: ${AWS_SUBMISSION_KEY}
+        AWS_SUBMISSION_ID: ${AWS_SUBMISSION_ID}
+        APP_HF_TOKEN: ${APP_HF_TOKEN}
+        APP_DEVICE: ${APP_DEVICE}
+
+    image: mednote:latest-dev
+    depends_on:
+      - medllm
+    command: pdm dev
+    restart: always
+    <<: *development-volumes
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+  mednote_frontend:
+    tty: true
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile.frontend
+    env_file:
+      - .env
+    environment:
+      - PUBLIC_API_URL=${PUBLIC_API_URL}
+      - ORIGIN=${ORIGIN}
+    command: bash -c 'npm run build && npm run preview'
+    restart: always
+  mednote_frontend_dev:
+    tty: true
+    build:
+      context: .
+      dockerfile: docker/dev/Dockerfile.frontend
+    env_file:
+      - .env
+    volumes:
+      - ./frontend:/app
+
+    environment:
+      - PUBLIC_API_URL=${PUBLIC_API_URL}
+      - ORIGIN=${ORIGIN}
+    # command: bash -c 'npm run build && npm run preview'
+    restart: no
+  caddy:
+    image: caddy:2.7
+    restart: always
+    environment:
+      - DOMAIN=${DOMAIN}
+    env_file:
+      - .env
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./deployment/data:/data
+      - ./deployment/data/Caddyfile.${APP_STAGE}:/etc/caddy/Caddyfile
+    depends_on:
+      - mednote_frontend
+      - mednote
+  medllm:
+    volumes:
+      - ./ollama:/root/.ollama
+      - ./models:/root/models/
+
+    tty: true
+    restart: always
+    image: ollama/ollama:latest
+    ports:
+      - 11134:11434
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: ["gpu"]
+  medllm_setup:
+    image: ollama/ollama:latest
+    depends_on:
+      - medllm
+    environment:
+      - OLLAMA_HOST=medllm:11434
+    entrypoint: []
+    command: sh -c "OLLAMA_HOST=medllm:11434 ollama create soapdoc -f /root/Modelfile"
+    restart: no
+    volumes:
+      - ./deployment/data/Modelfile:/root/Modelfile
+  medner_setup:
+    image: ollama/ollama:latest
+    depends_on:
+      - medllm
+    environment:
+      - OLLAMA_HOST=medllm:11434
+    entrypoint: []
+    command: sh -c "OLLAMA_HOST=medllm:11434 ollama create nersoap -f /root/Modelfile.NER"
+    restart: no
+    volumes:
+      - ./deployment/data/Modelfile:/root/Modelfile.NER
+  medllm_chat:
+    image: ghcr.io/open-webui/open-webui:main
+    volumes:
+      - open-webui:/app/backend/data
+    depends_on:
+      - medllm
+    environment:
+      - "OLLAMA_API_BASE_URL=http://medllm:11434/api"
+      - "WEBUI_SECRET_KEY="
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    restart: always
+
+volumes:
+  caddy: {}
+  mednote:
+  open-webui: {}
