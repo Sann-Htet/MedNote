@@ -1,0 +1,17 @@
+ezmednote.localhost {
+  reverse_proxy /api* mednote:8000 {
+        header_down Strict-Transport-Security "max-age=31536000; preload"
+  }
+
+  reverse_proxy /schema* mednote:8000 {
+        header_down Strict-Transport-Security "max-age=31536000; preload"
+  }
+  reverse_proxy  mednote_frontend_dev:5173 {
+        header_down Strict-Transport-Security "max-age=31536000; preload"
+  }
+}
+chatbot.localhost {
+  reverse_proxy  medllm_chat:8080 {
+        header_down Strict-Transport-Security "max-age=31536000; preload"
+  }
+}

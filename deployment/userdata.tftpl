@@ -1,0 +1,55 @@
+#!/bin/bash
+
+### Setup
+echo '${gh_mednote["gh_key"]}'  | base64 -d > /home/ubuntu/.ssh/id_rsa
+echo -e "\n" >> /home/ubuntu/.ssh/id_rsa
+echo '${gh_mednote["gh_pub"]}' | base64 -d  > /home/ubuntu/.ssh/id_rsa.pub
+export AWS_ACCESS_KEY_ID=${aws_cli["aws_id"]}
+export AWS_SECRET_ACCESS_KEY=${aws_cli["aws_key"]}
+export AWS_SUBMISSION_ID=${aws_cli["submission_id"]}
+export AWS_SUBMISSION_KEY=${aws_cli["submission_key"]}
+aws configure set aws_access_key_id ${aws_cli["aws_id"]}   --profile default
+aws configure set aws_secret_access_key ${aws_cli["aws_key"]} --profile default
+sudo chmod 600 /home/ubuntu/.ssh/id_rsa
+sudo chmod 644 /home/ubuntu/.ssh/id_rsa.pub
+sudo chown -R ubuntu:ubuntu /home/ubuntu/.ssh/*
+### Clone
+su ubuntu -c "GIT_SSH_COMMAND='ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null' git clone --branch trunk/dev git@github.com:skywarditsolutions/va_ai_hackathon.git /home/ubuntu/va_ai_hackathon"
+### Preopare Docker and ENVs
+
+cat << EOF > /home/ubuntu/va_ai_hackathon/.env
+AWS_ACCESS_KEY_ID=${aws_cli["aws_id"]}
+AWS_SECRET_ACCESS_KEY=${aws_cli["aws_key"]}
+AWS_SUBMISSION_ID=${aws_cli["submission_id"]}
+AWS_SUBMISSION_KEY=${aws_cli["submission_key"]}
+AWS_SUBMISSION_FOLDER=${aws_cli["submission_folder"]}
+AWS_S3_FOLDER=mednoteai
+PUBLIC_S3_FOLDER=mednoteai
+APP_HF_TOKEN=${hf}
+APP_DEVICE=${device}
+PUBLIC_API_URL="${public_api}"
+ORIGIN="${origin}"
+APP_STAGE="${stage}"
+DOMAIN="${origin}"
+EOF
+
+chmod 644 /home/ubuntu/va_ai_hackathon/.env
+%{ if device == "cuda" }
+    echo ${device} | tee > /var/log/setup-mednote.log
+    rm -rf /usr/local/cuda-*
+    # sudo apt update
+    # sudo apt install nvidia-driver-525 -y
+%{ endif }
+%{ if stage == "prod" }
+    ### Prepare Proxy
+    AWS_SECRET_ACCESS_KEY=${aws_cli["aws_key"]} AWS_ACCESS_KEY_ID=${aws_cli["aws_id"]} aws s3 cp s3://ezmednote.com/ezmednote.certs/${domain}/key.pem /home/ubuntu/va_ai_hackathon/deployment/data/
+    AWS_SECRET_ACCESS_KEY=${aws_cli["aws_key"]} AWS_ACCESS_KEY_ID=${aws_cli["aws_id"]} aws s3 cp s3://ezmednote.com/ezmednote.certs/${domain}/cert.pem /home/ubuntu/va_ai_hackathon/deployment/data/
+    AWS_SECRET_ACCESS_KEY=${aws_cli["aws_key"]} AWS_ACCESS_KEY_ID=${aws_cli["aws_id"]} aws s3 cp s3://ezmednote.com/ezmednote.certs/${domain}/fullchain.pem /home/ubuntu/va_ai_hackathon/deployment/data/
+    chmod 644 /home/ubuntu/va_ai_hackathon/deployment/data/cert.pem
+    chmod 644 /home/ubuntu/va_ai_hackathon/deployment/data/fullchain.pem
+    chmod 644 /home/ubuntu/va_ai_hackathon/deployment/data/key.pem
+    ### Run
+    su ubuntu -c 'docker compose -f /home/ubuntu/va_ai_hackathon/docker-compose.yml down'
+    su ubuntu -c 'docker compose -f /home/ubuntu/va_ai_hackathon/docker-compose.yml up --build -d'
+    su ubuntu -c 'docker system prune -a -f --volumes'
+%{ endif }

@@ -1,0 +1,13 @@
+{$DOMAIN} {
+  tls /data/fullchain.pem /data/key.pem
+  reverse_proxy /api* mednote:8000 {
+        header_down Strict-Transport-Security "max-age=31536000; preload"
+  }
+
+  reverse_proxy /schema* mednote:8000 {
+        header_down Strict-Transport-Security "max-age=31536000; preload"
+  }
+  reverse_proxy  mednote_frontend:5173 {
+        header_down Strict-Transport-Security "max-age=31536000; preload"
+  }
+}

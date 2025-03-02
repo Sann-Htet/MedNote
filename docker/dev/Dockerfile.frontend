@@ -1,0 +1,20 @@
+# Use the official Node.js 18.13 image as the base image
+FROM node:18.13
+
+# Set the working directory in the container
+WORKDIR /app
+
+# Copy package.json and package-lock.json to the working directory
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy the rest of the application files to the working directory
+COPY frontend .
+
+# Expose the port that the Vite application will run on
+EXPOSE 5432
+
+# Command to start the Vite application in development mode
+CMD ["npm", "run", "dev"]

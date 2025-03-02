@@ -1,0 +1,73 @@
+{
+  "Subjective": {
+    "Chief_Complaint": "Chest pain",
+    "History_of_Present_Illness": "Chest pain started last night and has been constant for about 8 hours. The pain is sharp and located on the left side of the chest. It is worse when laying down and when taking a deep breath. It is associated with lightheadedness and difficulty breathing. The pain is rated as a 7 or 8 on a scale of 1 to 10.",
+    "Past_Medical_History": {
+      "Past_medical_history": "None"
+    },
+    "Family_History": {
+      "Condition": "Father had a heart attack at 45 and had cholesterol problems."
+    },
+    "Social_History": {
+      "Marital_status": "Single",
+      "Place_of_residence": "Apartment",
+      "Alcohol": "Drinks about 10 drinks a week",
+      "Drugs": "Smokes about a pack of cigarettes a day and occasionally smokes marijuana (about 5 milligrams per week).",
+      "Smoking_habit": {
+        "Per_day": 1
+      },
+      "Exercise": {
+        "Frequency": "Every other day. Runs for about half an hour."
+      }
+    },
+    "Review_of_Systems": [
+      "Lightheadedness",
+      "Difficulty breathing",
+      "Racing heart",
+      "Sweating (due to difficulty breathing)"
+    ]
+  },
+  "Objective": {
+    "Physical_Examination": "Patient appears anxious and in pain. Vital signs: Blood pressure 120/80, pulse 90, respiratory rate 20, temperature 98.6°F. Chest examination reveals tenderness over the left side of the chest with no signs of trauma or deformity. No abdominal tenderness or guarding. No lymphadenopathy. No rashes or skin changes.",
+    "Laboratory_Results": [
+      {
+        "Result": "Normal"
+      }
+    ],
+    "Imaging_Results": [
+      {
+        "Result": "Normal"
+      }
+    ]
+  },
+  "Assessment": {
+    "Diagnoses": ["Chest pain"],
+    "Differential_Diagnoses": [
+      "Acute coronary syndrome",
+      "Pulmonary embolism",
+      "Pericarditis",
+      "Costochondritis",
+      "Gastroesophageal reflux disease",
+      "Musculoskeletal chest pain"
+    ]
+  },
+  "Plan": {
+    "Treatment": [
+      "Oxygen therapy",
+      "Nitroglycerin",
+      "Morphine for pain management",
+      "EKG",
+      "Chest X-ray",
+      "Blood tests (including troponin, D-dimer, and complete blood count)"
+    ],
+    "Follow_Up": "Patient will be admitted to the hospital for further evaluation and treatment.",
+    "Patient_Education": {
+      "Recommendations": [
+        "Avoid smoking and alcohol consumption",
+        "Avoid activities that exacerbate chest pain",
+        "Follow up with primary care physician for routine check-ups and preventive care"
+      ]
+    },
+    "Referrals": ["Cardiology consultation", "Pulmonology consultation"]
+  }
+}
